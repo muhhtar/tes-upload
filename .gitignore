@@ -1,0 +1,24 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Platform build outputs
+android/.gradle/
+ios/Flutter/.last_build_id
+ios/Pods/
+
+# Local and generated configuration
+.env
+.env.*
+!.env.example
+lib/firebase_options.dart
