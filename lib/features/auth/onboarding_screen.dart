@@ -60,6 +60,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 itemCount: _pages.length,
                 onPageChanged: (index) => setState(() => _currentIndex = index),
                 itemBuilder: (context, index) {
+                  if (index < 0 || index >= _pages.length) {
+                    return const SizedBox.shrink();
+                  }
                   final page = _pages[index];
                   final iconData = switch (page['icon']) {
                     'collections_bookmark_outlined' => Icons.collections_bookmark_outlined,

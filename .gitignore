@@ -21,4 +21,5 @@ ios/Pods/
 .env
 .env.*
 !.env.example
+*.firebase-config.json
 lib/firebase_options.dart

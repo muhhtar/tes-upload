@@ -17,8 +17,8 @@ class AiBadge extends StatelessWidget {
         vertical: AppSpacing.xs / 2,
       ),
       decoration: BoxDecoration(
-        color: AppColors.sageGreen,
-        borderRadius: BorderRadius.circular(AppRadius.small),
+        color: AppColors.success,
+        borderRadius: BorderRadius.circular(AppRadii.small),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -62,8 +62,8 @@ class PolaroidFrame extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        border: Border.all(color: AppColors.cardBorder),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: AppColors.border),
         boxShadow: const [
           BoxShadow(
             color: Colors.black12,
@@ -85,7 +85,7 @@ class PolaroidFrame extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.small),
+                borderRadius: BorderRadius.circular(AppRadii.small),
                 child: CachedNetworkImage(
                   imageUrl: imageUrl,
                   height: height,

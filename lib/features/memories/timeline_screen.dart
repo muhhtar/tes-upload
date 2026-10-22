@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_dimensions.dart';
+import '../../core/widgets/app_navigation_bar.dart';
 import '../../core/widgets/common_widgets.dart';
 import '../../data/models/memory_model.dart';
 import 'memory_providers.dart';
@@ -30,6 +31,22 @@ class TimelineScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Linimasa Kenangan'),
       ),
+      bottomNavigationBar: AppNavigationBar(
+        selectedIndex: 1,
+        onDestinationSelected: (index) {
+          switch (index) {
+            case 0:
+              context.go('/home');
+              break;
+            case 1:
+              context.go('/timeline');
+              break;
+            case 2:
+              context.go('/settings');
+              break;
+          }
+        },
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -48,7 +65,9 @@ class TimelineScreen extends ConsumerWidget {
                       selected: isSelected,
                       label: Text(category),
                       onSelected: (_) {
-                        ref.read(timelineCategoryProvider.notifier).state = category;
+                        ref
+                            .read(timelineCategoryProvider.notifier)
+                            .setCategory(category);
                       },
                     ),
                   );
@@ -98,8 +117,14 @@ class TimelineScreen extends ConsumerWidget {
                       ),
                       itemCount: years.length,
                       itemBuilder: (context, index) {
+                        if (index < 0 || index >= years.length) {
+                          return const SizedBox.shrink();
+                        }
                         final year = years[index];
-                        final items = grouped[year]!;
+                        final items = grouped[year];
+                        if (items == null || items.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,34 +180,56 @@ class _TimelineItemCard extends StatelessWidget {
     final hasAi = memory.aiIllustration != null;
     final photo = memory.media.where((m) => m.type == 'photo').firstOrNull;
     final imageUrl = hasAi ? memory.aiIllustration!.url : photo?.url;
+    final mediaLabel = hasAi
+        ? 'Ilustrasi AI'
+        : photo == null
+        ? 'Tanpa foto'
+        : 'Foto asli';
 
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.medium),
-        onTap: () => context.push('/memory/${memory.id}'),
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        onTap: () {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.push('/memory/${memory.id}');
+          });
+        },
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
-              if (imageUrl != null && imageUrl.isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.small),
-                  child: Image.network(
-                    imageUrl,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 60,
-                      height: 60,
-                      color: theme.colorScheme.secondaryContainer,
-                      child: const Icon(Icons.bookmark_outline),
-                    ),
-                  ),
+              Semantics(
+                label: '$mediaLabel untuk ${memory.title}',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadii.small),
+                  child: imageUrl == null || imageUrl.isEmpty
+                      ? Container(
+                          width: AppSpacing.xxl,
+                          height: AppSpacing.xxl,
+                          color: theme.colorScheme.secondaryContainer,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.auto_stories_outlined,
+                            color: theme.colorScheme.onSecondaryContainer,
+                          ),
+                        )
+                      : Image.network(
+                          imageUrl,
+                          width: AppSpacing.xxl,
+                          height: AppSpacing.xxl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, stack) => Container(
+                            width: AppSpacing.xxl,
+                            height: AppSpacing.xxl,
+                            color: theme.colorScheme.secondaryContainer,
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.broken_image_outlined),
+                          ),
+                        ),
                 ),
-                const SizedBox(width: AppSpacing.md),
-              ],
+              ),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,7 +256,7 @@ class _TimelineItemCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs / 2),
                     Text(
-                      '${memory.category} · ${_displayDate(memory.memoryDate)}',
+                      '${memory.category} · ${_displayDate(memory.memoryDate)} · $mediaLabel',
                       style: theme.textTheme.bodySmall,
                     ),
                     if (memory.story.isNotEmpty) ...[

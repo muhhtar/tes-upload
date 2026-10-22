@@ -87,10 +87,20 @@ class _LoreStudioScreenState extends ConsumerState<LoreStudioScreen> {
 
   Future<void> _discard() async {
     try {
-      await ref.read(memoryRepositoryProvider).removeIllustration(widget.memoryId);
-      if (mounted) context.pop();
+      await ref
+          .read(memoryRepositoryProvider)
+          .removeIllustration(widget.memoryId);
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.pop();
+        });
+      }
     } catch (_) {
-      if (mounted) context.pop();
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.pop();
+        });
+      }
     }
   }
 
@@ -98,7 +108,9 @@ class _LoreStudioScreenState extends ConsumerState<LoreStudioScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Ilustrasi AI berhasil diterapkan!')),
     );
-    context.pop();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.pop();
+    });
   }
 
   @override
@@ -106,9 +118,7 @@ class _LoreStudioScreenState extends ConsumerState<LoreStudioScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Lore Studio AI'),
-      ),
+      appBar: AppBar(title: const Text('Lore Studio AI')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -129,7 +139,7 @@ class _LoreStudioScreenState extends ConsumerState<LoreStudioScreen> {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.medium),
+                  borderRadius: BorderRadius.circular(AppRadii.card),
                 ),
                 child: Text(
                   _errorMessage!,
@@ -145,7 +155,7 @@ class _LoreStudioScreenState extends ConsumerState<LoreStudioScreen> {
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(AppRadius.medium),
+                  borderRadius: BorderRadius.circular(AppRadii.card),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -196,62 +206,67 @@ class _LoreStudioScreenState extends ConsumerState<LoreStudioScreen> {
               const SizedBox(height: AppSpacing.lg),
             ],
 
-            Text(
-              'Pilihan Gaya Ilustrasi',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('Pilihan Gaya Ilustrasi', style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.sm),
 
-            ..._styles.map((style) {
-              final isSelected = _selectedStyle == style['key'];
-              return Card(
-                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.medium),
-                  side: BorderSide(
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : Colors.transparent,
-                    width: 2,
-                  ),
+            IgnorePointer(
+              ignoring: _isGenerating,
+              child: RadioGroup<String>(
+                groupValue: _selectedStyle,
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _selectedStyle = value);
+                  }
+                },
+                child: Column(
+                  children: _styles.map((style) {
+                    final key = style['key'] as String;
+                    final isSelected = _selectedStyle == key;
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.card),
+                        side: BorderSide(
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: ListTile(
+                        leading: Icon(
+                          style['icon'] as IconData,
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        title: Text(
+                          style['label'] as String,
+                          style: TextStyle(
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        subtitle: Text(style['desc'] as String),
+                        trailing: Radio<String>(value: key),
+                        onTap: () => setState(() => _selectedStyle = key),
+                      ),
+                    );
+                  }).toList(),
                 ),
-                child: ListTile(
-                  leading: Icon(
-                    style['icon'] as IconData,
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                  title: Text(
-                    style['label'] as String,
-                    style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                  ),
-                  subtitle: Text(style['desc'] as String),
-                  trailing: Radio<String>(
-                    value: style['key'] as String,
-                    groupValue: _selectedStyle,
-                    onChanged: _isGenerating
-                        ? null
-                        : (val) {
-                            if (val != null) setState(() => _selectedStyle = val);
-                          },
-                  ),
-                  onTap: _isGenerating
-                      ? null
-                      : () {
-                          setState(() => _selectedStyle = style['key'] as String);
-                        },
-                ),
-              );
-            }),
+              ),
+            ),
 
             const SizedBox(height: AppSpacing.lg),
             FilledButton.icon(
               onPressed: _isGenerating ? null : _generate,
               icon: const Icon(Icons.auto_awesome),
-              label: Text(_previewUrl != null ? 'Buat Ulang Ilustrasi' : 'Buat Ilustrasi AI'),
+              label: Text(
+                _previewUrl != null
+                    ? 'Buat Ulang Ilustrasi'
+                    : 'Buat Ilustrasi AI',
+              ),
             ),
           ],
         ),

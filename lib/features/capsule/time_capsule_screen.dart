@@ -145,7 +145,9 @@ class _TimeCapsuleScreenState extends ConsumerState<TimeCapsuleScreen>
                               );
 
                           if (context.mounted) {
-                            Navigator.pop(context);
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (context.mounted) Navigator.pop(context);
+                            });
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Kapsul waktu berhasil dibuat! ⏳'),
@@ -292,6 +294,9 @@ class _TimeCapsuleScreenState extends ConsumerState<TimeCapsuleScreen>
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         itemCount: locked.length,
                         itemBuilder: (context, index) {
+                          if (index < 0 || index >= locked.length) {
+                            return const SizedBox.shrink();
+                          }
                           final item = locked[index];
                           final daysLeft =
                               item.unlockAt.difference(DateTime.now()).inDays + 1;
@@ -327,13 +332,16 @@ class _TimeCapsuleScreenState extends ConsumerState<TimeCapsuleScreen>
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         itemCount: unlocked.length,
                         itemBuilder: (context, index) {
+                          if (index < 0 || index >= unlocked.length) {
+                            return const SizedBox.shrink();
+                          }
                           final item = unlocked[index];
 
                           return Card(
                             margin: const EdgeInsets.only(bottom: AppSpacing.md),
                             child: ListTile(
                               leading: CircleAvatar(
-                                backgroundColor: Colors.greenContainer,
+                                backgroundColor: Colors.green.shade100,
                                 child: const Icon(
                                   Icons.key,
                                   color: Colors.green,

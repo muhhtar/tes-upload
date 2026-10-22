@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../../core/theme/app_dimensions.dart';
+import '../../core/theme/theme_mode_provider.dart';
+import '../../core/widgets/app_navigation_bar.dart';
 import '../auth/auth_providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -26,7 +28,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _checkBiometricSupport() async {
     try {
-      final canCheck = await _localAuth.canCheckBiometrics ||
+      final canCheck =
+          await _localAuth.canCheckBiometrics ||
           await _localAuth.isDeviceSupported();
       if (mounted) {
         setState(() => _canCheckBiometrics = canCheck);
@@ -38,8 +41,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (value) {
       try {
         final authenticated = await _localAuth.authenticate(
-          localizedReason: 'Konfirmasi biometrik untuk mengaktifkan kunci aplikasi',
-          options: const AuthenticationOptions(biometricOnly: true),
+          localizedReason:
+              'Konfirmasi biometrik untuk mengaktifkan kunci aplikasi',
         );
         if (authenticated && mounted) {
           setState(() => _biometricEnabled = true);
@@ -75,8 +78,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final user = ref.watch(authStateProvider).asData?.value;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pengaturan'),
+      appBar: AppBar(title: const Text('Pengaturan')),
+      bottomNavigationBar: AppNavigationBar(
+        selectedIndex: 2,
+        onDestinationSelected: (index) {
+          switch (index) {
+            case 0:
+              context.go('/home');
+              break;
+            case 1:
+              context.go('/timeline');
+              break;
+            case 2:
+              context.go('/settings');
+              break;
+          }
+        },
       ),
       body: SafeArea(
         child: ListView(
@@ -97,6 +114,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   style: theme.textTheme.titleMedium,
                 ),
                 subtitle: Text(user?.email ?? ''),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            Text('Tampilan', style: theme.textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.xs),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: SegmentedButton<ThemeMode>(
+                  segments: const [
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      icon: Icon(Icons.light_mode_outlined),
+                      label: Text('Terang'),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      icon: Icon(Icons.dark_mode_outlined),
+                      label: Text('Gelap'),
+                    ),
+                  ],
+                  selected: {
+                    theme.brightness == Brightness.dark
+                        ? ThemeMode.dark
+                        : ThemeMode.light,
+                  },
+                  onSelectionChanged: (selection) {
+                    if (selection.isNotEmpty) {
+                      ref
+                          .read(themeModeProvider.notifier)
+                          .setThemeMode(selection.first);
+                    }
+                  },
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -130,7 +182,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.shield_outlined, color: theme.colorScheme.primary),
+                        Icon(
+                          Icons.shield_outlined,
+                          color: theme.colorScheme.primary,
+                        ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           'Data Kamu Aman & Privat',

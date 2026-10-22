@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -33,19 +34,36 @@ class TimeCapsuleRepository {
       mood: mood,
     );
 
-    final doc = await _capsules.add(capsule.toMap());
-    return doc.id;
+    try {
+      final doc = await _capsules
+          .add(capsule.toMap())
+          .timeout(const Duration(seconds: 5));
+      return doc.id;
+    } on TimeoutException {
+      throw TimeoutException('Koneksi waktu habis saat membuat kapsul waktu.');
+    }
   }
 
   Future<void> openCapsule(String id) async {
-    await _capsules.doc(id).update({
-      'is_opened': true,
-      'opened_at': FieldValue.serverTimestamp(),
-    });
+    try {
+      await _capsules.doc(id).update({
+        'is_opened': true,
+        'opened_at': FieldValue.serverTimestamp(),
+      }).timeout(const Duration(seconds: 5));
+    } on TimeoutException {
+      throw TimeoutException('Koneksi waktu habis.');
+    }
   }
 
   Future<void> deleteCapsule(String id) async {
-    await _capsules.doc(id).delete();
+    try {
+      await _capsules
+          .doc(id)
+          .delete()
+          .timeout(const Duration(seconds: 5));
+    } on TimeoutException {
+      throw TimeoutException('Koneksi waktu habis.');
+    }
   }
 
   Stream<List<TimeCapsuleModel>> watchCapsules() {
@@ -57,6 +75,7 @@ class TimeCapsuleRepository {
     return _capsules
         .where('user_id', isEqualTo: userId)
         .snapshots()
+        .handleError((_) {})
         .map((snapshot) {
           final items = snapshot.docs
               .map((doc) {

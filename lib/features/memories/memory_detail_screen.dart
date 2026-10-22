@@ -57,7 +57,9 @@ class MemoryDetailScreen extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Kenangan berhasil dihapus.')),
           );
-          context.pop();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) context.pop();
+          });
         }
       } catch (_) {
         if (context.mounted) {
@@ -156,6 +158,9 @@ class MemoryDetailScreen extends ConsumerWidget {
                     child: PageView.builder(
                       itemCount: photos.length,
                       itemBuilder: (context, index) {
+                        if (index < 0 || index >= photos.length) {
+                          return const SizedBox.shrink();
+                        }
                         return PolaroidFrame(
                           imageUrl: photos[index].url,
                           caption: 'Foto ${index + 1} dari ${photos.length}',
